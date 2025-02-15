@@ -28,10 +28,10 @@ const {
   providers,
   exports,
   networks,
+  brandings,
   flexibleLines,
   flexibleStopPlaces,
   editor,
-  stopPlaces,
 } = reducers;
 
 const staticReducers = {
@@ -41,13 +41,13 @@ const staticReducers = {
   providers,
   exports,
   networks,
+  brandings,
   flexibleLines,
   flexibleStopPlaces,
   editor,
   config,
   intl,
   userContext,
-  stopPlaces,
 };
 
 const devMiddlewares =

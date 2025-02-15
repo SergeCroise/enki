@@ -1,90 +1,80 @@
 import { StopPlace } from '../../api';
 import { Button } from '@entur/button';
-import { getMarkerIcon } from './markers';
+import { getMarkerIcon } from './markerIcons';
 import { Marker, Popup } from 'react-leaflet';
 import { useIntl } from 'react-intl';
-import { Heading5 } from '@entur/typography';
 import { AddIcon } from '@entur/icons';
+import StopPlaceDetails from './StopPlaceDetails';
+import { memo, MutableRefObject, useRef } from 'react';
+import { usePopupOpeningOnFocus } from './hooks';
+import { getStopPlaceLocation } from './helpers';
 
 interface StopPlaceMarkerProps {
   stopPlace: StopPlace;
-  showQuaysCallback: () => void;
-  addStopPointCallback: (quayRef: string) => void;
+  showQuays: (showAll: boolean, stopPlaceId: string) => void;
+  addStopPoint: (quayRef: string) => void;
+  isPopupToBeOpen: boolean;
+  clearFocusedMarker: () => void;
 }
 
-const StopPlaceMarker = ({
-  stopPlace,
-  showQuaysCallback,
-  addStopPointCallback,
-}: StopPlaceMarkerProps) => {
-  const intl = useIntl();
-  const { formatMessage } = intl;
-  const stopPlaceLocation =
-    stopPlace.centroid && stopPlace.quays.length > 1
-      ? stopPlace.centroid.location
-      : stopPlace.quays[0].centroid.location;
+const StopPlaceMarker = memo(
+  ({
+    stopPlace,
+    showQuays,
+    addStopPoint,
+    isPopupToBeOpen,
+    clearFocusedMarker,
+  }: StopPlaceMarkerProps) => {
+    const intl = useIntl();
+    const { formatMessage } = intl;
+    const stopPlaceLocation = getStopPlaceLocation(stopPlace);
+    const markerRef: MutableRefObject<any> = useRef();
+    usePopupOpeningOnFocus(isPopupToBeOpen, markerRef, clearFocusedMarker);
 
-  return (
-    <Marker
-      key={'stop-place-marker-' + stopPlace.id}
-      icon={getMarkerIcon(stopPlace.transportMode, true, false)}
-      position={[stopPlaceLocation.latitude, stopPlaceLocation.longitude]}
-    >
-      <Popup>
-        <section>
-          <Heading5 className={'popup-title'}>{stopPlace.name.value}</Heading5>
-          <div className={'popup-id'}>{stopPlace.id}</div>
-        </section>
+    return (
+      <Marker
+        key={'stop-place-marker-' + stopPlace.id}
+        ref={markerRef}
+        icon={getMarkerIcon(stopPlace.transportMode, true, false)}
+        position={[stopPlaceLocation.latitude, stopPlaceLocation.longitude]}
+      >
+        <Popup>
+          <StopPlaceDetails stopPlace={stopPlace} />
 
-        <section>
-          {formatMessage({ id: stopPlace.transportMode?.toLowerCase() })}
-        </section>
-
-        {stopPlace.quays.length > 1 ? (
-          <section>
-            {formatMessage(
-              { id: 'numberOfQuays' },
-              { count: stopPlace.quays.length },
-            )}
-          </section>
-        ) : (
-          <section>
-            <div>{formatMessage({ id: 'oneQuay' })}:</div>
-            <div className={'popup-id'}>{stopPlace.quays[0].id}</div>
-          </section>
-        )}
-
-        {stopPlace.quays?.length > 1 ? (
-          <Button
-            className={'popup-button'}
-            onClick={() => {
-              showQuaysCallback();
-            }}
-            width="auto"
-            variant="primary"
-            size="small"
-          >
-            {formatMessage({ id: 'showQuays' })}
-          </Button>
-        ) : (
-          <Button
-            className={'popup-button'}
-            onClick={() => {
-              addStopPointCallback(stopPlace.quays[0].id);
-              // When user selected a single quay, we still want to enter the "show quays" mode:
-              showQuaysCallback();
-            }}
-            width="auto"
-            variant="primary"
-            size="small"
-          >
-            <AddIcon />
-            {formatMessage({ id: 'addToJourneyPattern' })}
-          </Button>
-        )}
-      </Popup>
-    </Marker>
-  );
-};
+          {stopPlace.quays?.length > 1 ? (
+            <Button
+              className={'popup-button'}
+              onClick={() => {
+                markerRef.current.closePopup();
+                showQuays(true, stopPlace.id);
+              }}
+              width="auto"
+              variant="primary"
+              size="small"
+            >
+              {formatMessage({ id: 'showQuays' })}
+            </Button>
+          ) : (
+            <Button
+              className={'popup-button'}
+              onClick={() => {
+                markerRef.current.closePopup();
+                addStopPoint(stopPlace.quays[0].id);
+                // To avoid grey area on the map once the container gets bigger in the height:
+                window.dispatchEvent(new Event('resize'));
+              }}
+              width="auto"
+              variant="primary"
+              size="small"
+            >
+              <AddIcon />
+              {formatMessage({ id: 'addToJourneyPattern' })}
+            </Button>
+          )}
+        </Popup>
+      </Marker>
+    );
+  },
+);
 
 export default StopPlaceMarker;

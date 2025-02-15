@@ -1,5 +1,4 @@
 import { SecondaryButton, SuccessButton } from '@entur/button';
-import { Paragraph } from '@entur/typography';
 import BookingArrangementEditor from 'components/BookingArrangementEditor';
 import { BookingInfoAttachmentType } from 'components/BookingArrangementEditor/constants';
 import ConfirmDialog from 'components/ConfirmDialog';
@@ -7,7 +6,7 @@ import DeleteButton from 'components/DeleteButton/DeleteButton';
 import { getErrorFeedback } from 'helpers/errorHandling';
 import { validateStopPoint } from 'helpers/validation';
 import usePristine from 'hooks/usePristine';
-import { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useIntl } from 'react-intl';
 import {
   BoardingTypeSelect,
@@ -19,7 +18,11 @@ import {
   useOnFrontTextChange,
 } from '../common/FrontTextTextField';
 import { QuayRefField, useOnQuayRefChange } from '../common/QuayRefField';
-import { StopPointEditorProps } from '../common/StopPointEditorProps';
+import { GenericStopPointEditorProps } from '../common/StopPointEditorProps';
+import StopPointOrder from '../common/StopPointOrder';
+import { ComponentToggle } from '@entur/react-component-toggle';
+import { StopPointButtonGroupProps } from '../../../ext/JourneyPatternStopPointMap/StopPointButtonGroup/types';
+import { SandboxFeatures } from '../../../config/config';
 
 export const GenericStopPointEditor = ({
   order,
@@ -31,7 +34,9 @@ export const GenericStopPointEditor = ({
   onDelete,
   canDelete,
   flexibleLineType,
-}: StopPointEditorProps) => {
+  onFocusedQuayIdUpdate,
+  swapStopPoints,
+}: GenericStopPointEditorProps) => {
   const { formatMessage } = useIntl();
   const {
     stopPlace: stopPlaceError,
@@ -48,11 +53,22 @@ export const GenericStopPointEditor = ({
 
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
+  const onDeleteDialogOpen = useCallback((isOpen: boolean) => {
+    setDeleteDialogOpen(isOpen);
+  }, []);
+
   return (
     <div className="stop-point">
       <div className="stop-point-element">
-        <div className="stop-point-key-info">
-          <Paragraph>{order}</Paragraph>
+        <div className="stop-point-key-info stop-point-key-info--general">
+          <StopPointOrder
+            order={order}
+            isLast={isLast}
+            isFirst={isFirst}
+            swapStopPoints={
+              swapStopPoints as (pos1: number, pos2: number) => void
+            }
+          />
         </div>
         <div className="stop-point-info">
           <QuayRefField
@@ -80,10 +96,25 @@ export const GenericStopPointEditor = ({
           />
         </div>
 
-        <DeleteButton
-          disabled={!canDelete}
-          onClick={() => setDeleteDialogOpen(true)}
-          title={formatMessage({ id: 'editorDeleteButtonText' })}
+        <ComponentToggle<SandboxFeatures, StopPointButtonGroupProps>
+          feature={'JourneyPatternStopPointMap/StopPointButtonGroup'}
+          renderFallback={() => (
+            <DeleteButton
+              thin={true}
+              disabled={!canDelete}
+              onClick={() => {
+                onDeleteDialogOpen(true);
+              }}
+              title={formatMessage({ id: 'editorDeleteButtonText' })}
+            />
+          )}
+          componentProps={{
+            stopPoint,
+            onDeleteDialogOpen,
+            flexibleLineType,
+            onFocusedQuayIdUpdate,
+            canDelete,
+          }}
         />
 
         <ConfirmDialog

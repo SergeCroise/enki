@@ -26,7 +26,7 @@ const QuayPositionChips = ({
 
   return (
     <section>
-      <div style={{ textWrap: 'nowrap' }}>
+      <div style={{ textWrap: 'nowrap', marginBottom: '0.15rem' }}>
         {formatMessage({
           id: `quayOrder`,
         })}
@@ -48,7 +48,7 @@ const QuayPositionChips = ({
       </div>
 
       <ConfirmDialog
-        isOpen={!!deleteDialogState.index}
+        isOpen={deleteDialogState.index !== undefined}
         title={formatMessage({ id: 'deleteStopPointDialogTitle' })}
         message={formatMessage({ id: 'deleteStopPointDialogMessage' })}
         buttons={[
@@ -61,12 +61,14 @@ const QuayPositionChips = ({
           <SuccessButton
             key="yes"
             onClick={() => {
-              if (!deleteDialogState.index) {
+              if (deleteDialogState.index === undefined) {
                 return;
               }
               const indexToDelete = deleteDialogState.index;
               setDeleteDialogState({ index: undefined });
               deleteStopPointCallback(indexToDelete);
+              // To avoid grey area on the map once the container gets bigger in the height:
+              window.dispatchEvent(new Event('resize'));
             }}
           >
             {formatMessage({ id: 'yes' })}

@@ -1,6 +1,6 @@
 import { Button, SecondaryButton } from '@entur/button';
 import { AddIcon } from '@entur/icons';
-import React from 'react';
+import React, { MutableRefObject } from 'react';
 import { useIntl } from 'react-intl';
 
 interface QuayPopupButtonPanelProps {
@@ -9,20 +9,22 @@ interface QuayPopupButtonPanelProps {
   hasSelectedQuay: boolean;
   hasNonSelectedQuays: boolean;
   hideNonSelectedQuaysState: boolean;
-  hideNonSelectedQuaysCallback: (hideNonSelected: boolean) => void;
-  showQuaysCallback: (showAll: boolean) => void;
-  addStopPointCallback: (quayId: string) => void;
+  hideNonSelectedQuays: (hideNonSelected: boolean) => void;
+  showQuays: (showAll: boolean) => void;
+  addStopPoint: (quayId: string) => void;
+  markerRef: MutableRefObject<any>;
 }
 
 const QuayPopupButtonPanel = ({
   quayId,
   quaysTotalCount,
-  addStopPointCallback,
+  addStopPoint,
   hasSelectedQuay,
   hasNonSelectedQuays,
   hideNonSelectedQuaysState,
-  hideNonSelectedQuaysCallback,
-  showQuaysCallback,
+  hideNonSelectedQuays,
+  showQuays,
+  markerRef,
 }: QuayPopupButtonPanelProps) => {
   const intl = useIntl();
   const { formatMessage } = intl;
@@ -32,7 +34,10 @@ const QuayPopupButtonPanel = ({
       <Button
         className={'popup-button'}
         onClick={() => {
-          addStopPointCallback(quayId);
+          markerRef.current.closePopup();
+          addStopPoint(quayId);
+          // To avoid grey area on the map once the container gets bigger in the height:
+          window.dispatchEvent(new Event('resize'));
         }}
         width="auto"
         variant="primary"
@@ -47,9 +52,10 @@ const QuayPopupButtonPanel = ({
           style={{
             marginLeft: '0.5rem',
           }}
-          onClick={() =>
-            hideNonSelectedQuaysCallback(!hideNonSelectedQuaysState)
-          }
+          onClick={() => {
+            markerRef.current.closePopup();
+            hideNonSelectedQuays(!hideNonSelectedQuaysState);
+          }}
           width="auto"
           size="small"
         >
@@ -66,7 +72,7 @@ const QuayPopupButtonPanel = ({
           style={{
             marginLeft: '0.5rem',
           }}
-          onClick={() => showQuaysCallback(false)}
+          onClick={() => showQuays(false)}
           width="auto"
           size="small"
         >

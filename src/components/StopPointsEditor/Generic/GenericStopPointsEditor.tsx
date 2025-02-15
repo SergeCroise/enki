@@ -1,13 +1,14 @@
 import { Heading3, Paragraph } from '@entur/typography';
 import AddButton from 'components/AddButton/AddButton';
-import useUniqueKeys from 'hooks/useUniqueKeys';
 import StopPoint from 'model/StopPoint';
 import { useIntl } from 'react-intl';
 import { StopPointsEditorProps } from '..';
 import { GenericStopPointEditor } from './GenericStopPointEditor';
-import { JourneyPatternStopPointMap } from '../../../ext/JourneyPatternStopPointMap/JourneyPatternStopPointMap';
-import SandboxFeature from '../../../ext/SandboxFeature';
 import { useConfig } from '../../../config/ConfigContext';
+import { SmallAlertBox } from '@entur/alert';
+import '../styles.scss';
+import { useCallback, useEffect, useState } from 'react';
+import { ComponentToggle } from '@entur/react-component-toggle';
 
 export const GenericStopPointsEditor = ({
   pointsInSequence,
@@ -17,22 +18,51 @@ export const GenericStopPointsEditor = ({
   addStopPoint,
   flexibleLineType,
   transportMode,
+  initDefaultJourneyPattern,
+  swapStopPoints,
 }: StopPointsEditorProps) => {
-  const keys = useUniqueKeys(pointsInSequence);
   const { formatMessage } = useIntl();
   const { sandboxFeatures } = useConfig();
+  const isMapEnabled = sandboxFeatures?.JourneyPatternStopPointMap;
+  const [focusedQuayId, setFocusedQuayId] = useState<string | undefined | null>(
+    undefined,
+  );
+
+  useEffect(() => {
+    // if map isn't enabled, let's produce two empty stop points
+    if (!isMapEnabled && pointsInSequence?.length === 0) {
+      initDefaultJourneyPattern();
+    }
+  }, []);
+
+  const onFocusedQuayIdUpdate = useCallback(
+    (quayId: string | undefined | null) => {
+      setFocusedQuayId(quayId);
+    },
+    [],
+  );
 
   return (
     <section style={{ marginTop: '2em' }}>
       <Heading3>{formatMessage({ id: 'editorStopPoints' })}</Heading3>
-      <Paragraph>{formatMessage({ id: 'stopPointsInfoFixed' })}</Paragraph>
+      {!isMapEnabled && (
+        <Paragraph>{formatMessage({ id: 'stopPointsInfoFixed' })}</Paragraph>
+      )}
       <div className={'stop-point-editor-container'}>
         <div
-          className={`stop-point-editor ${sandboxFeatures?.JourneyPatternStopPointMap ? 'stop-point-editor-width-limit' : ''}`}
+          className={`stop-point-editor ${isMapEnabled ? 'stop-point-editor-width-limit' : ''}`}
         >
+          {isMapEnabled && pointsInSequence?.length < 2 && (
+            <SmallAlertBox
+              className={'stop-point-number-alert'}
+              variant={'info'}
+            >
+              {formatMessage({ id: 'stopPointsMapInfo' })}
+            </SmallAlertBox>
+          )}
           {pointsInSequence.map((stopPoint, pointIndex) => (
             <GenericStopPointEditor
-              key={keys[pointIndex]}
+              key={stopPoint.key}
               order={pointIndex + 1}
               stopPoint={stopPoint}
               spoilPristine={spoilPristine}
@@ -44,15 +74,21 @@ export const GenericStopPointsEditor = ({
               onDelete={() => deleteStopPoint(pointIndex)}
               canDelete={pointsInSequence.length > 2}
               flexibleLineType={flexibleLineType}
+              onFocusedQuayIdUpdate={onFocusedQuayIdUpdate}
+              swapStopPoints={swapStopPoints}
             />
           ))}
         </div>
-        <SandboxFeature
+        <ComponentToggle
           feature={'JourneyPatternStopPointMap'}
-          pointsInSequence={pointsInSequence}
-          addStopPoint={addStopPoint}
-          deleteStopPoint={deleteStopPoint}
-          transportMode={transportMode}
+          componentProps={{
+            pointsInSequence,
+            addStopPoint,
+            deleteStopPoint,
+            transportMode,
+            focusedQuayId,
+            onFocusedQuayIdUpdate,
+          }}
         />
       </div>
       <AddButton

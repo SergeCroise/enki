@@ -1,6 +1,7 @@
 import { OidcClientSettings } from 'oidc-client-ts';
 import { FlexibleLineType } from '../model/FlexibleLine';
 import { Locale } from '../i18n';
+import { VEHICLE_MODE } from '../model/enums';
 
 /**
  * All sandbox features should be added to this interface like this:
@@ -9,7 +10,7 @@ import { Locale } from '../i18n';
  *  For multi-level features, only the top-level featureName should be
  *  toggled.
  */
-export interface SandboxFeatures {
+export interface SandboxFeatureConfig {
   /**
    * Fintraffic's custom features or assets grouped in one location;
    * For example: custom styles override, logo component and translations provider.
@@ -19,7 +20,17 @@ export interface SandboxFeatures {
    * Map for editing stop places as part JourneyPattern form
    */
   JourneyPatternStopPointMap: boolean;
+  /**
+   * Matomo web analytics
+   */
+  MatomoTracker: boolean;
+  /**
+   * Cookie consent management provider
+   */
+  CookieInformation: boolean;
 }
+
+export type SandboxFeatures = keyof SandboxFeatureConfig;
 
 export interface Config {
   /**
@@ -53,12 +64,6 @@ export interface Config {
   xmlnsUrlPrefix?: string;
 
   /**
-   * Enables Entur specific legacy bevaior for filtering authorities and operators.
-   * {@see ../model/Organisation.ts}
-   */
-  enableLegacyOrganisationsFilter?: boolean;
-
-  /**
    * Optionally restrict available flexible line types available for users to choose from when
    * creating flexible lines.
    */
@@ -83,7 +88,7 @@ export interface Config {
   /**
    * Sandbox feature configuration
    */
-  sandboxFeatures?: SandboxFeatures;
+  sandboxFeatures?: SandboxFeatureConfig;
 
   /**
    * Path to folder inder /ext that contains features or assets of a company that adopted Nplan.
@@ -93,4 +98,8 @@ export interface Config {
    *    overriding translations (case appTitle)
    */
   extPath?: string;
+
+  hideExportDryRun?: boolean;
+
+  routeGeometrySupportedVehicleModes?: VEHICLE_MODE[];
 }

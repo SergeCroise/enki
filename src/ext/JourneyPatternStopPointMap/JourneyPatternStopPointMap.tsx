@@ -1,151 +1,200 @@
 import './styles.scss';
-import FormMap from '../../components/FormMap';
-import MarkerClusterGroup from 'react-leaflet-cluster';
-import { useAppSelector } from '../../store/hooks';
-import { Reducer, useCallback, useEffect, useReducer } from 'react';
-import StopPlaceMarker from './StopPlaceMarker';
-import { JourneyPatternStopPointMapProps } from './types';
-import { Polyline } from 'react-leaflet';
-import { getStopPlaces } from '../../actions/stopPlaces';
-import { useDispatch } from 'react-redux';
-import { StopPointLocation } from '../../reducers/stopPlaces';
+import { memo, useCallback, useState } from 'react';
+import {
+  FocusedMarker,
+  FocusedMarkerNewMapState,
+  JourneyPatternsStopPlacesState,
+  JourneyPatternStopPointMapProps,
+} from './types';
+import { Polyline, useMapEvents, ZoomControl } from 'react-leaflet';
 import { StopPlace } from '../../api';
-import QuaysWrapper from './Quay/QuaysWrapper';
+import SearchPopover from './Popovers/SearchPopover';
+import {
+  getSelectedQuayIds,
+  getStopPlacesState,
+  onFocusedMarkerNewMapState,
+} from './helpers';
+import {
+  useFitMapBounds,
+  useMapSpecs,
+  useMapState,
+  useHandleFocusedQuayId,
+  useMapZoomIntoLocation,
+  useStopPlacesStateCombinedWithSearchResults,
+  useRouteGeometry,
+} from './hooks';
+import Markers from './Markers';
+import { useConfig } from '../../config/ConfigContext';
 
-interface MapState {
-  quayStopPointSequenceIndexes: Record<string, number[]>;
-  stopPointLocationSequence: StopPointLocation[];
-  showQuaysState: Record<string, boolean>;
-  hideNonSelectedQuaysState: Record<string, boolean>;
-}
+const JourneyPatternStopPointMap = memo(
+  ({
+    pointsInSequence,
+    addStopPoint,
+    deleteStopPoint,
+    transportMode,
+    stopPlacesState,
+    focusedQuayId,
+    onFocusedQuayIdUpdate,
+  }: JourneyPatternStopPointMapProps) => {
+    const { routeGeometrySupportedVehicleModes } = useConfig();
+    let isRouteGeometryEnabled =
+      routeGeometrySupportedVehicleModes &&
+      routeGeometrySupportedVehicleModes?.filter(
+        (mode) => mode === transportMode,
+      ).length > 0;
 
-export const JourneyPatternStopPointMap = ({
-  pointsInSequence,
-  addStopPoint,
-  deleteStopPoint,
-  transportMode,
-}: JourneyPatternStopPointMapProps) => {
-  const dispatch = useDispatch<any>();
-  const [mapState, setMapState] = useReducer<
-    Reducer<MapState, Partial<MapState>>
-  >(
-    (state: MapState, newState: Partial<MapState>) => ({
-      ...state,
-      ...newState,
-    }),
-    {
-      quayStopPointSequenceIndexes: {},
-      stopPointLocationSequence: [],
-      showQuaysState: {},
-      hideNonSelectedQuaysState: {},
-    },
-  );
-
-  const stopPlaces = useAppSelector((state) => state.stopPlaces)?.stopPlaces;
-  const quayLocationsIndex = useAppSelector(
-    (state) => state.stopPlaces,
-  )?.quayLocationsIndex;
-  const quayStopPlaceIndex = useAppSelector(
-    (state) => state.stopPlaces,
-  )?.quayStopPlaceIndex;
-
-  useEffect(() => {
-    if (transportMode) {
-      dispatch(getStopPlaces(transportMode));
-    }
-  }, []);
-
-  useEffect(() => {
-    let stopPointIndex = 0;
-    const newQuayIndexesRecord: Record<string, number[]> = {};
-    const newShowQuaysState: Record<string, boolean> = {};
-    const newStopPointLocations: StopPointLocation[] = [];
-    if (!quayStopPlaceIndex || !quayLocationsIndex) {
-      return;
-    }
-
-    pointsInSequence.forEach((point) => {
-      if (!point?.quayRef) {
-        stopPointIndex++;
-        return;
-      }
-
-      const newIndexArray: number[] = newQuayIndexesRecord[point.quayRef]
-        ? [...newQuayIndexesRecord[point.quayRef]]
-        : [];
-      newIndexArray.push(stopPointIndex++);
-      newQuayIndexesRecord[point.quayRef] = newIndexArray;
-
-      const stopPlaceId = quayStopPlaceIndex[point.quayRef];
-      // Let's get into show quays mode, so that a quay entered through the form gets visible:
-      newShowQuaysState[stopPlaceId] = true;
-
-      if (quayLocationsIndex[point.quayRef]?.location) {
-        newStopPointLocations.push([
-          quayLocationsIndex[point.quayRef].location.latitude,
-          quayLocationsIndex[point.quayRef].location.longitude,
-        ]);
-      }
+    // Capture and store map's zoom level and view bounds.
+    // Will be used later to produce markers within the visible bounds:
+    const { mapSpecsState, updateMapSpecs } = useMapSpecs();
+    useMapEvents({
+      moveend: () => {
+        updateMapSpecs();
+      },
     });
 
-    setMapState({
-      quayStopPointSequenceIndexes: newQuayIndexesRecord,
-      stopPointLocationSequence: newStopPointLocations,
-      showQuaysState: newShowQuaysState,
-    });
-  }, [pointsInSequence, quayStopPlaceIndex, quayLocationsIndex, setMapState]);
+    // Search results stop places and its respective indexes:
+    const [searchedStopPlacesState, setSearchedStopPlacesState] =
+      useState<JourneyPatternsStopPlacesState>(getStopPlacesState(undefined));
 
-  const showQuaysCallback = useCallback(
-    (showAll: boolean, stopPlaceId: string) => {
-      const newShowQuaysState = {
-        ...mapState.showQuaysState,
-      };
-      newShowQuaysState[stopPlaceId] = showAll;
-      setMapState({ showQuaysState: newShowQuaysState });
-    },
-    [mapState.showQuaysState, setMapState],
-  );
+    // Get the final stop places data that will be the base for Markers:
+    const {
+      totalStopPlaces,
+      totalQuayLocationsIndex,
+      totalQuayStopPlaceIndex,
+    } = useStopPlacesStateCombinedWithSearchResults(
+      stopPlacesState,
+      searchedStopPlacesState,
+    );
 
-  const hideNonSelectedQuaysCallback = useCallback(
-    (hideNonSelected: boolean, stopPlaceId: string) => {
-      const newHideNonSelectedQuaysState = {
-        ...mapState.hideNonSelectedQuaysState,
-      };
-      newHideNonSelectedQuaysState[stopPlaceId] = hideNonSelected;
-      setMapState({ hideNonSelectedQuaysState: newHideNonSelectedQuaysState });
-    },
-    [mapState.hideNonSelectedQuaysState, setMapState],
-  );
+    // This hook manages what's shown on the map and how exactly:
+    const { mapState, setMapState, mapStateRef } = useMapState(
+      pointsInSequence,
+      totalQuayLocationsIndex,
+      totalQuayStopPlaceIndex,
+      !!isRouteGeometryEnabled,
+    );
 
-  return (
-    <FormMap>
-      <MarkerClusterGroup chunkedLoading disableClusteringAtZoom={12}>
-        <Polyline positions={mapState.stopPointLocationSequence} />
-        {stopPlaces?.map((stopPlace: StopPlace) => {
-          return mapState.showQuaysState[stopPlace.id] ? (
-            <QuaysWrapper
-              stopPlace={stopPlace}
-              stopPointSequenceIndexes={mapState.quayStopPointSequenceIndexes}
-              hideNonSelectedQuaysState={
-                mapState.hideNonSelectedQuaysState[stopPlace.id]
-              }
-              deleteStopPoint={deleteStopPoint}
-              addStopPoint={addStopPoint}
-              hideNonSelectedQuaysCallback={hideNonSelectedQuaysCallback}
-              showQuaysCallback={showQuaysCallback}
-            />
-          ) : (
-            <StopPlaceMarker
-              key={stopPlace.id}
-              stopPlace={stopPlace}
-              showQuaysCallback={() => {
-                showQuaysCallback(true, stopPlace.id);
-              }}
-              addStopPointCallback={addStopPoint}
-            />
+    if (isRouteGeometryEnabled) {
+      // Handling service links data;
+      // If route geometry is enabled, this is where the needed coordinates are set up
+      useRouteGeometry(pointsInSequence, totalQuayLocationsIndex, setMapState);
+    }
+
+    // If there are already stop points selected, zoom in to the route on initial map load:
+    useFitMapBounds(pointsInSequence, totalQuayLocationsIndex);
+
+    // Zoom into location of a focused marker:
+    useMapZoomIntoLocation(mapState.focusedMarker?.marker.location);
+
+    const updateSearchedStopPlaces = useCallback(
+      (newSearchedStopPlacesState: JourneyPatternsStopPlacesState) => {
+        setSearchedStopPlacesState(newSearchedStopPlacesState);
+      },
+      [],
+    );
+
+    /**
+     * Focused marker may lead to various ways the overall map state would need to be updated:
+     */
+    const processFocusedMarker = useCallback(
+      (
+        focusedMarker: FocusedMarker | undefined,
+        updateOnlyFocusedMarkerState?: boolean,
+      ) => {
+        if (!focusedMarker) {
+          setMapState({ focusedMarker: undefined });
+          return;
+        }
+
+        if (updateOnlyFocusedMarkerState) {
+          setMapState({
+            focusedMarker,
+          });
+          return;
+        }
+
+        const oldMapState = {
+          ...mapStateRef.current,
+        };
+
+        const changedMapState: FocusedMarkerNewMapState =
+          onFocusedMarkerNewMapState(
+            focusedMarker,
+            mapStateRef.current.showQuaysState,
+            mapStateRef.current.hideNonSelectedQuaysState,
+            mapStateRef.current.quayStopPointSequenceIndexes,
           );
-        })}
-      </MarkerClusterGroup>
-    </FormMap>
-  );
-};
+
+        if (changedMapState.hideNonSelectedQuaysState) {
+          // mapStateRef needs to be kept up-to-date to fulfil its purpose in the useMap hook
+          mapStateRef.current.hideNonSelectedQuaysState =
+            changedMapState.hideNonSelectedQuaysState;
+        }
+        if (changedMapState.showQuaysState) {
+          mapStateRef.current.showQuaysState = changedMapState.showQuaysState;
+        }
+
+        setMapState({
+          ...oldMapState,
+          ...changedMapState,
+        });
+      },
+      [mapStateRef.current],
+    );
+
+    // Process the focusedQuayId gotten from outside, e.g. from the stop point editor:
+    useHandleFocusedQuayId(
+      focusedQuayId,
+      totalQuayLocationsIndex,
+      totalQuayStopPlaceIndex,
+      processFocusedMarker,
+    );
+
+    const clearFocusedMarker = useCallback(() => {
+      processFocusedMarker(undefined);
+      if (focusedQuayId) {
+        onFocusedQuayIdUpdate(undefined);
+      }
+    }, [focusedQuayId]);
+
+    const getSelectedQuayIdsCallback = useCallback(
+      (stopPlace: StopPlace) => {
+        return getSelectedQuayIds(
+          stopPlace.quays,
+          mapStateRef.current.quayStopPointSequenceIndexes,
+        );
+      },
+      [mapStateRef.current, getSelectedQuayIds],
+    );
+
+    const updateMapState = useCallback((newMapState: any) => {
+      setMapState(newMapState);
+    }, []);
+
+    return (
+      <>
+        <SearchPopover
+          searchedStopPlaces={searchedStopPlacesState.stopPlaces}
+          transportMode={transportMode}
+          getSelectedQuayIds={getSelectedQuayIdsCallback}
+          onSearchResultLocated={processFocusedMarker}
+          onSearchedStopPlacesFetched={updateSearchedStopPlaces}
+        />
+        <ZoomControl position={'topright'} />
+        <Polyline positions={mapState.stopPointLocationSequence} />
+        <Markers
+          mapSpecsState={mapSpecsState}
+          mapState={mapState}
+          mapStateRef={mapStateRef}
+          stopPlaces={totalStopPlaces}
+          deleteStopPoint={deleteStopPoint}
+          addStopPoint={addStopPoint}
+          clearFocusedMarker={clearFocusedMarker}
+          onStopPointAddedOrDeleted={updateMapState}
+        />
+      </>
+    );
+  },
+);
+
+export default JourneyPatternStopPointMap;

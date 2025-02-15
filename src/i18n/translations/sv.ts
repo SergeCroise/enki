@@ -52,6 +52,7 @@ export const messages = {
   navBarFlexibleOffersSubMenuHeaderLabel: 'Flexibel trafik',
   navBarFlexibleLinesMenuItemLabel: 'Flexibla linjer',
   navBarNetworksMenuItemLabel: 'Nätverk',
+  navBarBrandingsMenuItemLabel: 'Varumärken',
   navBarRootLinkLogoAltText: 'Logga',
   navBarRootLinkText: '',
   navBarStopPlacesMenuItemLabel: 'Flexibla hållplatser',
@@ -60,6 +61,7 @@ export const messages = {
   userMenuMenuItemTextLanguage: 'Språk',
   userMenuMenuItemTextNorwegian: 'Norsk',
   userMenuMenuItemTextSwedish: 'Svenska',
+  userMenuMenuItemTextFinnish: 'Suomi',
   languagePickerAriaLabel: 'Välj språk',
   navBarDataProvider: 'Välj dataleverantör',
   redirectTitle: 'Ändringar är inte sparade!',
@@ -269,6 +271,8 @@ export const messages = {
     'Du måste lägga till minst två hållplatser; ett första och ett sista. Välj mellan flexibla eller fasta hållplatser.',
   stopPointsInfoFixed:
     'Du måste lägga till minst två hållplatser; ett första och ett sista. Fyll i en giltig ID.',
+  stopPointsMapInfo:
+    'Du måste lägga till minst två hållplatser; ett första och ett sista.',
   stopPointsInfoFlexibleAreaOnly:
     'Den här typen av flexibel linje tillåter endast en flexibel hållplats där all ombord- och avstigning sker.',
   stopPointsInfoMixedFlexible:
@@ -347,9 +351,10 @@ export const messages = {
   editorJourneyPatternsTabLabel: 'Journey patterns',
   newJourneyPatternModalTitle: 'Nytt journey pattern',
   newJourneyPatternModalSubTitle: 'Fyll i namn och tryck därefter på Skapa',
+  newJourneyPatternModaluniqueName: 'Journey pattern måste ha ett unikt namn',
   newJourneyPatternModalCancel: 'Avbryt',
   newJourneyPatternModalCreate: 'Skapa',
-  newJourneyPatternModalLabel: 'Namn',
+  newJourneyPatternModalLabel: 'Namn *',
   newJourneyPatternModalPlaceholder: 'Ex. "Lokal linje"',
   editorLoadingLineText: 'Läser in linje',
   editorLoadingNetworkAndStopsText: 'Läser in nätverk och hållplatser',
@@ -462,6 +467,34 @@ export const messages = {
   networksNameTableHeaderLabel: 'Namn',
   networksNoNetworksFoundText: 'Inga nätverk hittades',
   networksPrivateCodeTableHeaderLabel: 'Privat kod',
+  branding: 'varumärke',
+  brandingsHeaderText: 'Varumärken',
+  brandingsLoadingBrandingsText: 'Laddar varumärken...',
+  brandingsNameTableHeaderLabel: 'Namn',
+  brandingsNoBrandingsFoundText: 'Inga varumärken hittades',
+  brandingsShortNameTableHeaderLabel: 'Kort namn',
+  brandingsDescriptionTableHeaderLabel: 'Beskrivning',
+  brandingsUrlTableHeaderLabel: 'URL',
+  brandingsImageUrlTableHeaderLabel: 'Bild URL',
+  editorCreateBrandingHeaderText: 'Skapa varumärke',
+  editorBrandingDescription:
+    'Varumärken kan användas för att lägga till ditt eget varumärke till linjer och nätverk.',
+  editorBrandingNameLabelText: 'Namn *',
+  editorBrandingShortNameLabelText: 'Kort namn',
+  editorBrandingDescriptionLabelText: 'Beskrivning',
+  editorBrandingUrlLabelText: 'URL',
+  editorBrandingImageUrlLabelText: 'Bild URL',
+  editorBrandingValidationName: 'Namn måste fyllas i',
+  editorDeleteBrandingConfirmDialogTitle: 'Ta bort varumärke',
+  editorDeleteBrandingConfirmDialogMessage:
+    'Är du säker på att du vill ta bort detta varumärke?',
+  editorEditBrandingHeaderText: 'Redigera varumärke',
+  editorDeleteBrandingConfirmDialogCancelText: 'Nej',
+  editorDeleteBrandingConfirmDialogConfirmText: 'Ja',
+  editorDeleteBrandingConfirmationDialogTitle: 'Ta bort varumärke',
+  editorDeleteBrandingConfirmationDialogMessage:
+    'Är du säker på att du vill ta bort detta varumärke?',
+  brandingsDropdownLabelText: 'Varumärke',
   stopPlacesCreateStopPlaceLinkIconLabelText: 'Skapa flexibel hållplats',
   editorDescription:
     'Fyll i lista med koordinater i GeoJSON-formatet, eller klicka i kartan för att skapa en polygon.',
@@ -636,4 +669,21 @@ export const messages = {
   saveProviderErrorFallback: 'Okänt fel vid sparning av dataleverantör',
   noProvidersDescriptionText:
     'Din Nplan-installation behöver minst en dataleverantör',
+  dropdownNoMatchesText: 'Inga val tillgängliga',
+  exportsDownloadUnsupportedBrowserTitle: 'Webbläsaren stöds inte',
+  exportsDownloadUnsupportedBrowserMessage:
+    'Din webbläsare stöder inte nedladdning av filer',
+  exportsDownloadErrorTitle: 'Nedladdning misslyckades',
+  exportsDownloadErrorMessage:
+    'Ett fel har uppstått medan filen laddades ner. Försök igen.',
+  selectAll: 'Välj alla',
+  clearAll: 'Ta bort valda',
+  clearSelected: 'Ta bort valda',
+  copyJourneyPatternDialogTitle: 'Kopiera pysäkkiketju',
+  copyJourneyPatternDialogNameTemplateLabel: 'Namnmall *',
+  copyJourneyPatternDialogCancelButtonText: 'Nej',
+  copyJourneyPatternDialogSaveButtonText: 'Ja',
+  copyInstance: 'en kopia',
+  journeyPatternDuplicateNameValidationError:
+    'Journey pattern måste ha ett unikt namn',
 };

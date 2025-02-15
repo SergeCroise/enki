@@ -9,6 +9,11 @@
   margin-right: 30px;
 }
 
+.stop-point-number-alert {
+  min-width: 450px;
+  margin-bottom: 3rem;
+}
+
 @media only screen and (min-width: 1600px) {
   .stop-point-editor-width-limit {
     max-width: 980px;
@@ -17,20 +22,35 @@
 
 .stop-point-editor {
   .stop-point {
-    padding-bottom: 0.7rem;
     border-bottom: 2px solid $colors-greys-grey20;
 
     .stop-point-element {
       display: flex;
       justify-content: space-between;
-      margin-top: $space-extra-large;
+      margin-top: $space-medium;
 
       .stop-point-key-info {
-        display: flex;
         min-width: fit-content;
+        display: flex;
 
-        > :first-child {
-          margin: auto 2rem auto 0;
+        .order {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          // To center better:
+          margin-bottom: $space-small;
+
+          .eds-paragraph {
+            margin: 0 2rem 0 0.4rem;
+          }
+
+          .move-up {
+            transform: rotate(90deg);
+          }
+
+          .move-down {
+            transform: rotate(-90deg);
+          }
         }
 
         > fieldset {
@@ -52,6 +72,7 @@
         max-width: 50rem;
         flex-basis: 100%;
         margin-left: 1rem;
+        margin-right: 1rem;
 
         .eds-input-group + .eds-input-group {
           margin-top: 0;
@@ -70,11 +91,30 @@
         > :last-child {
           margin-right: 0;
         }
+
+        .action-buttons-group {
+          display: flex;
+          flex-direction: column;
+          min-width: fit-content;
+        }
       }
     }
 
     > :last-child {
       border-bottom: none;
+    }
+  }
+
+  #locate-button {
+    margin: 0;
+    padding: 0 0.5rem;
+    min-width: fit-content;
+    white-space: nowrap;
+    width: fit-content;
+    margin-top: 2.25rem;
+
+    svg {
+      margin-right: 0;
     }
   }
 }

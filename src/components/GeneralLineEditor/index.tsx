@@ -1,4 +1,4 @@
-import { Dropdown } from '@entur/dropdown';
+import { Dropdown, SearchableDropdown } from '@entur/dropdown';
 import { TextField } from '@entur/form';
 import { Heading1 } from '@entur/typography';
 import BookingArrangementEditor from 'components/BookingArrangementEditor';
@@ -21,11 +21,13 @@ import { ChangeEvent, useCallback, useMemo } from 'react';
 import { useIntl } from 'react-intl';
 import VehicleSubModeDropdown from './VehicleSubModeDropdown';
 import './styles.scss';
+import { Branding } from '../../model/Branding';
 
 interface Props<T extends Line> {
   line: T;
   operators: Organisation[];
   networks: Network[];
+  brandings: Branding[];
   onChange: <T extends Line>(line: T) => void;
   spoilPristine: boolean;
 }
@@ -34,6 +36,7 @@ export default <T extends Line>({
   line,
   operators,
   networks,
+  brandings,
   onChange,
   spoilPristine,
 }: Props<T>) => {
@@ -70,10 +73,10 @@ export default <T extends Line>({
           serviceJourneys: journeyPattern.serviceJourneys.map(
             (serviceJourney: ServiceJourney) => ({
               ...serviceJourney,
-              passingTimes: [{}, {}],
+              passingTimes: [],
             }),
           ),
-          pointsInSequence: [{}, {}],
+          pointsInSequence: [],
         }),
       ),
       flexibleLineType: newFlexibleLineType,
@@ -97,6 +100,11 @@ export default <T extends Line>({
   );
 
   const getNetworkItems = useCallback(() => mapToItems(networks), [networks]);
+
+  const getBrandingItems = useCallback(
+    () => mapToItems(brandings),
+    [brandings],
+  );
 
   return (
     <div className="lines-editor-general">
@@ -165,7 +173,7 @@ export default <T extends Line>({
           }
         />
 
-        <Dropdown<string>
+        <SearchableDropdown<string>
           selectedItem={
             getOperatorItems().find(
               (item) => item.value === line.operatorRef,
@@ -174,7 +182,11 @@ export default <T extends Line>({
           placeholder={formatMessage({ id: 'defaultOption' })}
           items={getOperatorItems}
           clearable
+          labelClearSelectedItem={formatMessage({ id: 'clearSelected' })}
           label={formatMessage({ id: 'generalOperatorFormGroupTitle' })}
+          noMatchesText={formatMessage({
+            id: 'dropdownNoMatchesText',
+          })}
           onChange={(element) =>
             onChange<Line>({
               ...(line as Line),
@@ -196,7 +208,11 @@ export default <T extends Line>({
           placeholder={formatMessage({ id: 'defaultOption' })}
           items={getNetworkItems}
           clearable
+          labelClearSelectedItem={formatMessage({ id: 'clearSelected' })}
           label={formatMessage({ id: 'generalNetworkFormGroupTitle' })}
+          noMatchesText={formatMessage({
+            id: 'dropdownNoMatchesText',
+          })}
           onChange={(element) =>
             onChange<Line>({
               ...(line as Line),
@@ -208,6 +224,24 @@ export default <T extends Line>({
             !isBlank(line.networkRef),
             networkPristine,
           )}
+        />
+
+        <Dropdown<string>
+          items={getBrandingItems}
+          selectedItem={
+            getBrandingItems().find(
+              (item) => item.value === line.brandingRef,
+            ) || null
+          }
+          clearable
+          labelClearSelectedItem={formatMessage({ id: 'clearSelected' })}
+          onChange={(element) =>
+            onChange<Line>({
+              ...(line as Line),
+              brandingRef: element?.value,
+            })
+          }
+          label={formatMessage({ id: 'brandingsDropdownLabelText' })}
         />
 
         {isFlexibleLine && (
@@ -230,6 +264,7 @@ export default <T extends Line>({
             placeholder={formatMessage({ id: 'defaultOption' })}
             items={getModeItems}
             clearable
+            labelClearSelectedItem={formatMessage({ id: 'clearSelected' })}
             label={formatMessage({ id: 'transportModeTitle' })}
             onChange={(element) =>
               onChange<Line>({

@@ -10,7 +10,7 @@ import flexibleStopPlaces, {
 import networks, { NetworksState } from './networks';
 import organisations, { OrganisationState } from './organisations';
 import providers, { ProvidersState } from './providers';
-import stopPlaces, { StopPlacesState } from './stopPlaces';
+import brandings, { BrandingsState } from './brandings';
 
 export type GlobalState = {
   notification: NotificationState;
@@ -19,11 +19,11 @@ export type GlobalState = {
   providers: ProvidersState;
   exports: ExportsState;
   networks: NetworksState;
+  brandings: BrandingsState;
   flexibleLines: FlexibleLinesState;
   flexibleStopPlaces: FlexibleStopPlacesState;
   editor: EditorState;
   config: ConfigState;
-  stopPlaces: StopPlacesState;
 };
 
 const reducers = {
@@ -32,10 +32,10 @@ const reducers = {
   providers,
   exports,
   networks,
+  brandings,
   flexibleLines,
   flexibleStopPlaces,
   editor,
-  stopPlaces,
 };
 
 export default reducers;
